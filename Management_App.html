@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            width: 300px;
+            border-right: 1px solid #ccc;
+            padding: 20px;
+        }
+        .main {
+            flex-grow: 1;
+            display: flex;
+            flex-wrap: nowrap; /* All quarters on one line */
+            padding: 20px;
+            overflow: auto; /* Allows scrolling if content doesn't fit */
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .buttons button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .list {
+            display: none;
+            width: 100%;
+        }
+        .list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .list li {
+            padding: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            cursor: grab;
+        }
+        .quarters {
+            display: flex;
+            flex-wrap: nowrap; /* All quarters on one line */
+            gap: 10px;
+            width: 100%;
+        }
+        .quarter {
+            flex: 1 1 0; /* Quarters are evenly distributed across the available space */
+            min-width: 200px; /* Minimum width for each quarter */
+            border: 1px solid #000;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box; /* Checks padding, width and height */
+        }
+        .quarter .header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .quarter .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            flex-grow: 1;
+            box-sizing: border-box;
+        }
+        .project {
+            width: 150px; /* fixed width */
+            min-height: 100px; /* min height */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #fff;
+            font-weight: bold;
+            cursor: grab;
+            position: relative;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden; /* Hide content if it does not fit in the block */
+        }
+        .project.blue { background-color: blue; }
+        .project.red { background-color: red; }
+        .project.green { background-color: green; }
+        .employee {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 2px 0;
+            border: 1px solid #000;
+            text-align: center;
+            background-color: #fff;
+            color: #000;
+            cursor: grab;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="header">
+        <h1>Management</h1>
+    </div>
+
+    <div class="buttons">
+        <button onclick="showEmployees()">Employees</button>
+        <button onclick="showProjects()">Projects</button>
+    </div>
+
+    <div class="list-container">
+        <div id="employeeList" class="list">
+            <ul>
+                <li draggable="true" ondragstart="drag(event)">Alice</li>
+                <li draggable="true" ondragstart="drag(event)">Bob</li>
+                <li draggable="true" ondragstart="drag(event)">Charlie</li>
+            </ul>
+        </div>
+        <div id="projectList" class="list">
+            <div class="project blue" draggable="true" ondragstart="drag(event)">Project A</div>
+            <div class="project red" draggable="true" ondragstart="drag(event)">Project B</div>
+            <div class="project green" draggable="true" ondragstart="drag(event)">Project C</div>
+        </div>
+    </div>
+</div>
+
+<div class="main">
+    <div class="quarters">
+        <div class="quarter">
+            <div class="header">Quarter 1</div>
+            <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="quarter">
+            <div class="header">Quarter 2</div>
+            <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="quarter">
+            <div class="header">Quarter 3</div>
+            <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="quarter">
+            <div class="header">Quarter 4</div>
+            <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showEmployees() {
+        document.getElementById('employeeList').style.display = 'block';
+        document.getElementById('projectList').style.display = 'none';
+    }
+
+    function showProjects() {
+        document.getElementById('employeeList').style.display = 'none';
+        document.getElementById('projectList').style.display = 'block';
+    }
+
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function drag(event) {
+        event.dataTransfer.setData("text", event.target.innerText);
+        event.dataTransfer.setData("type", event.target.classList.contains('project') ? 'project' : 'employee');
+        event.dataTransfer.setData("class", event.target.className);
+        if (event.target.classList.contains('project')) {
+            event.dataTransfer.setData("content", event.target.innerHTML);
+        }
+    }
+
+    function drop(event) {
+        event.preventDefault();
+        var data = event.dataTransfer.getData("text");
+        var type = event.dataTransfer.getData("type");
+        var className = event.dataTransfer.getData("class");
+
+        if (type === 'project') {
+            var newProject = document.createElement("div");
+            newProject.className = className.split(' ').filter(c => c === 'project' || c === 'blue' || c === 'red' || c === 'green').join(' ');
+            newProject.draggable = true;
+            newProject.ondragstart = drag;
+
+            var projectName = document.createElement("div");
+            projectName.innerText = data;
+            newProject.appendChild(projectName);
+
+            event.target.appendChild(newProject);
+        } else {
+            var employee = document.createElement("div");
+            employee.className = "employee";
+            employee.innerText = data;
+
+            if (event.target.classList.contains('project')) {
+                event.target.appendChild(employee);
+            } else {
+                var projects = event.target.getElementsByClassName('project');
+                if (projects.length > 0) {
+                    projects[projects.length - 1].appendChild(employee);
+                }
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
