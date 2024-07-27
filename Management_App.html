@@ -148,15 +148,15 @@
     <div class="list-container">
         <div id="employeeList" class="list">
             <ul>
-                <li draggable="true" ondragstart="drag(event)">Alice</li>
-                <li draggable="true" ondragstart="drag(event)">Bob</li>
-                <li draggable="true" ondragstart="drag(event)">Charlie</li>
+                <li draggable="true" ondragstart="drag(event)" id="Alice">Alice</li>
+                <li draggable="true" ondragstart="drag(event)" id="Bob">Bob</li>
+                <li draggable="true" ondragstart="drag(event)" id="Charlie">Charlie</li>
             </ul>
         </div>
         <div id="projectList" class="list">
-            <div class="project blue" draggable="true" ondragstart="drag(event)">Project A</div>
-            <div class="project red" draggable="true" ondragstart="drag(event)">Project B</div>
-            <div class="project green" draggable="true" ondragstart="drag(event)">Project C</div>
+            <div class="project blue" draggable="true" ondragstart="drag(event)" id="ProjectA">Project A</div>
+            <div class="project red" draggable="true" ondragstart="drag(event)" id="ProjectB">Project B</div>
+            <div class="project green" draggable="true" ondragstart="drag(event)" id="ProjectC">Project C</div>
         </div>
     </div>
 </div>
@@ -202,34 +202,34 @@
     }
 
     function drag(event) {
-        event.dataTransfer.setData("text", event.target.innerText);
+        event.dataTransfer.setData("text", event.target.id); // Use ID instead of innerText
         event.dataTransfer.setData("type", event.target.classList.contains('project') ? 'project' : 'employee');
         event.dataTransfer.setData("class", event.target.className);
-        event.dataTransfer.setData("parentId", event.target.closest('.quarter') ? event.target.closest('.quarter').id : ''); // Save parent ID
+        event.dataTransfer.setData("parentId", event.target.closest('.quarter') ? event.target.closest('.quarter').id : ''); // Save parent quarter ID
     }
 
     function drop(event) {
         event.preventDefault();
-        var data = event.dataTransfer.getData("text");
+        var id = event.dataTransfer.getData("text");
         var type = event.dataTransfer.getData("type");
         var className = event.dataTransfer.getData("class");
-        var parentId = event.dataTransfer.getData("parentId");
 
         if (type === 'project') {
             var newProject = document.createElement("div");
             newProject.className = className; // Use the saved className
             newProject.draggable = true;
             newProject.ondragstart = drag;
-            newProject.innerText = data;
+            newProject.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
+            newProject.id = id; // Set the ID
             event.target.appendChild(newProject);
         } else if (type === 'employee') {
             var employee = document.createElement("div");
             employee.className = "employee";
-            employee.innerText = data;
+            employee.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
             employee.draggable = true; // Make employee draggable
             employee.ondragstart = drag; // Set drag event for employees
+            employee.id = id; // Set the ID
 
-            // Check if dropping into a project or quarter
             if (event.target.classList.contains('project')) {
                 event.target.appendChild(employee);
             } else if (event.target.classList.contains('quarter')) {
@@ -243,7 +243,7 @@
 
     function dropTrash(event) {
         event.preventDefault();
-        var data = event.dataTransfer.getData("text");
+        var id = event.dataTransfer.getData("text");
         var type = event.dataTransfer.getData("type");
         var parentId = event.dataTransfer.getData("parentId");
 
@@ -252,7 +252,7 @@
             if (quarter) {
                 var projects = quarter.querySelectorAll('.project');
                 projects.forEach(project => {
-                    if (project.innerText === data) {
+                    if (project.id === id) {
                         project.remove(); // Remove only from the current quarter
                     }
                 });
@@ -264,7 +264,7 @@
                 projects.forEach(project => {
                     var employees = project.querySelectorAll('.employee');
                     employees.forEach(employee => {
-                        if (employee.innerText === data) {
+                        if (employee.id === id) {
                             employee.remove(); // Remove only from the current project
                         }
                     });
@@ -272,6 +272,15 @@
             }
         }
     }
+
+    function generateUniqueId() {
+        return Math.floor(Math.random() * Date.now()).toString();
+    }
+
+    // Assign unique IDs to initial elements
+    document.querySelectorAll('.list li, .list .project').forEach(element => {
+        element.id = generateUniqueId() + '-' + element.innerText;
+    });
 </script>
 
 </body>
