@@ -10,6 +10,7 @@
             display: flex;
             height: 100vh;
             margin: 0;
+            position: relative;
         }
         .sidebar {
             width: 300px;
@@ -113,6 +114,23 @@
             cursor: grab;
             white-space: nowrap;
         }
+        .trash {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            background-color: #ff0000;
+            color: #fff;
+            text-align: center;
+            line-height: 100px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .trash:hover {
+            background-color: #cc0000;
+        }
     </style>
 </head>
 <body>
@@ -145,23 +163,27 @@
 
 <div class="main">
     <div class="quarters">
-        <div class="quarter">
+        <div class="quarter" id="quarter1">
             <div class="header">Quarter 1</div>
             <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
         </div>
-        <div class="quarter">
+        <div class="quarter" id="quarter2">
             <div class="header">Quarter 2</div>
             <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
         </div>
-        <div class="quarter">
+        <div class="quarter" id="quarter3">
             <div class="header">Quarter 3</div>
             <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
         </div>
-        <div class="quarter">
+        <div class="quarter" id="quarter4">
             <div class="header">Quarter 4</div>
             <div class="content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
         </div>
     </div>
+</div>
+
+<div id="trash" class="trash" ondrop="dropTrash(event)" ondragover="allowDrop(event)">
+    Trash
 </div>
 
 <script>
@@ -183,9 +205,7 @@
         event.dataTransfer.setData("text", event.target.innerText);
         event.dataTransfer.setData("type", event.target.classList.contains('project') ? 'project' : 'employee');
         event.dataTransfer.setData("class", event.target.className);
-        if (event.target.classList.contains('project')) {
-            event.dataTransfer.setData("content", event.target.innerHTML);
-        }
+        event.dataTransfer.setData("parentId", event.target.closest('.quarter') ? event.target.closest('.quarter').id : ''); // Save parent ID
     }
 
     function drop(event) {
@@ -193,30 +213,62 @@
         var data = event.dataTransfer.getData("text");
         var type = event.dataTransfer.getData("type");
         var className = event.dataTransfer.getData("class");
+        var parentId = event.dataTransfer.getData("parentId");
 
         if (type === 'project') {
             var newProject = document.createElement("div");
-            newProject.className = className.split(' ').filter(c => c === 'project' || c === 'blue' || c === 'red' || c === 'green').join(' ');
+            newProject.className = className; // Use the saved className
             newProject.draggable = true;
             newProject.ondragstart = drag;
-
-            var projectName = document.createElement("div");
-            projectName.innerText = data;
-            newProject.appendChild(projectName);
-
+            newProject.innerText = data;
             event.target.appendChild(newProject);
-        } else {
+        } else if (type === 'employee') {
             var employee = document.createElement("div");
             employee.className = "employee";
             employee.innerText = data;
+            employee.draggable = true; // Make employee draggable
+            employee.ondragstart = drag; // Set drag event for employees
 
+            // Check if dropping into a project or quarter
             if (event.target.classList.contains('project')) {
                 event.target.appendChild(employee);
-            } else {
-                var projects = event.target.getElementsByClassName('project');
+            } else if (event.target.classList.contains('quarter')) {
+                var projects = event.target.querySelectorAll('.project');
                 if (projects.length > 0) {
                     projects[projects.length - 1].appendChild(employee);
                 }
+            }
+        }
+    }
+
+    function dropTrash(event) {
+        event.preventDefault();
+        var data = event.dataTransfer.getData("text");
+        var type = event.dataTransfer.getData("type");
+        var parentId = event.dataTransfer.getData("parentId");
+
+        if (type === 'project') {
+            var quarter = document.getElementById(parentId);
+            if (quarter) {
+                var projects = quarter.querySelectorAll('.project');
+                projects.forEach(project => {
+                    if (project.innerText === data) {
+                        project.remove(); // Remove only from the current quarter
+                    }
+                });
+            }
+        } else if (type === 'employee') {
+            var quarter = document.getElementById(parentId);
+            if (quarter) {
+                var projects = quarter.querySelectorAll('.project');
+                projects.forEach(project => {
+                    var employees = project.querySelectorAll('.employee');
+                    employees.forEach(employee => {
+                        if (employee.innerText === data) {
+                            employee.remove(); // Remove only from the current project
+                        }
+                    });
+                });
             }
         }
     }
