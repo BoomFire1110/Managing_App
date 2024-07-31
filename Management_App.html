@@ -227,21 +227,28 @@
                 quarter.querySelector('.content').appendChild(newProject);
             }
         } else if (type === 'employee') {
-            var employee = document.createElement("div");
-            employee.className = "employee";
-            employee.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
-            employee.draggable = true; // Make employee draggable
-            employee.ondragstart = drag; // Set drag event for employees
-            employee.id = id; // Set the ID
-
-			/* Check for duplicates before adding project to quarter */
-
-            if (event.target.classList.contains('project')) {
-                event.target.appendChild(employee);
+            var project = event.target.closest('.project');
+            if (project && !project.querySelector(`#${id}`)) {
+                var employee = document.createElement("div");
+                employee.className = "employee";
+                employee.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
+                employee.draggable = true; // Make employee draggable
+                employee.ondragstart = drag; // Set drag event for employees
+                employee.id = id; // Set the ID
+                project.appendChild(employee);
             } else if (event.target.classList.contains('quarter')) {
                 var projects = event.target.querySelectorAll('.project');
                 if (projects.length > 0) {
-                    projects[projects.length - 1].appendChild(employee);
+                    var targetProject = projects[projects.length - 1];
+                    if (!targetProject.querySelector(`#${id}`)) {
+                        var employee = document.createElement("div");
+                        employee.className = "employee";
+                        employee.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
+                        employee.draggable = true; // Make employee draggable
+                        employee.ondragstart = drag; // Set drag event for employees
+                        employee.id = id; // Set the ID
+                        targetProject.appendChild(employee);
+                    }
                 }
             }
         }
