@@ -202,26 +202,30 @@
     }
 
     function drag(event) {
-        event.dataTransfer.setData("text", event.target.id); // Use ID instead of innerText
+        event.dataTransfer.setData("id", event.target.id); // Use ID instead of innerText
         event.dataTransfer.setData("type", event.target.classList.contains('project') ? 'project' : 'employee');
         event.dataTransfer.setData("class", event.target.className);
-        event.dataTransfer.setData("parentId", event.target.closest('.quarter') ? event.target.closest('.quarter').id : ''); // Save parent quarter ID
+        event.dataTransfer.setData("parentProjectId", event.target.closest('.project') ? event.target.closest('.project').id : ''); // Save parent project ID
+        event.dataTransfer.setData("parentQuarterId", event.target.closest('.quarter') ? event.target.closest('.quarter').id : ''); // Save parent quarter ID
     }
 
     function drop(event) {
         event.preventDefault();
-        var id = event.dataTransfer.getData("text");
+        var id = event.dataTransfer.getData("id");
         var type = event.dataTransfer.getData("type");
         var className = event.dataTransfer.getData("class");
 
         if (type === 'project') {
-            var newProject = document.createElement("div");
-            newProject.className = className; // Use the saved className
-            newProject.draggable = true;
-            newProject.ondragstart = drag;
-            newProject.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
-            newProject.id = id; // Set the ID
-            event.target.appendChild(newProject);
+            var quarter = event.target.closest('.quarter');
+            if (quarter && !quarter.querySelector(`#${id}`)) {
+                var newProject = document.createElement("div");
+                newProject.className = className; // Use the saved className
+                newProject.draggable = true;
+                newProject.ondragstart = drag;
+                newProject.innerText = id.replace(/^\d+-/, ''); // Remove the ID prefix for display
+                newProject.id = id; // Set the ID
+                quarter.querySelector('.content').appendChild(newProject);
+            }
         } else if (type === 'employee') {
             var employee = document.createElement("div");
             employee.className = "employee";
@@ -229,6 +233,8 @@
             employee.draggable = true; // Make employee draggable
             employee.ondragstart = drag; // Set drag event for employees
             employee.id = id; // Set the ID
+
+			/* Check for duplicates before adding project to quarter */
 
             if (event.target.classList.contains('project')) {
                 event.target.appendChild(employee);
@@ -243,44 +249,36 @@
 
     function dropTrash(event) {
         event.preventDefault();
-        var id = event.dataTransfer.getData("text");
+        var id = event.dataTransfer.getData("id");
         var type = event.dataTransfer.getData("type");
-        var parentId = event.dataTransfer.getData("parentId");
+        var parentProjectId = event.dataTransfer.getData("parentProjectId");
+        var parentQuarterId = event.dataTransfer.getData("parentQuarterId");
 
         if (type === 'project') {
-            var quarter = document.getElementById(parentId);
+            var quarter = document.getElementById(parentQuarterId);
             if (quarter) {
-                var projects = quarter.querySelectorAll('.project');
-                projects.forEach(project => {
-                    if (project.id === id) {
-                        project.remove(); // Remove only from the current quarter
-                    }
-                });
+                var project = quarter.querySelector(`#${parentProjectId}`);
+                if (project && project.id === id) {
+                    project.remove(); // Remove only from the current quarter
+                }
             }
         } else if (type === 'employee') {
-            var quarter = document.getElementById(parentId);
+            var quarter = document.getElementById(parentQuarterId);
             if (quarter) {
-                var projects = quarter.querySelectorAll('.project');
-                projects.forEach(project => {
-                    var employees = project.querySelectorAll('.employee');
-                    employees.forEach(employee => {
-                        if (employee.id === id) {
-                            employee.remove(); // Remove only from the current project
-                        }
-                    });
-                });
+                var project = quarter.querySelector(`#${parentProjectId}`);
+                if (project) {
+                    var employee = project.querySelector(`#${id}`);
+                    if (employee) {
+                        employee.remove(); // Remove only from the current project
+                    }
+                }
             }
         }
     }
 
     function generateUniqueId() {
-        return Math.floor(Math.random() * Date.now()).toString();
+        return Date.now();
     }
-
-    // Assign unique IDs to initial elements
-    document.querySelectorAll('.list li, .list .project').forEach(element => {
-        element.id = generateUniqueId() + '-' + element.innerText;
-    });
 </script>
 
 </body>
